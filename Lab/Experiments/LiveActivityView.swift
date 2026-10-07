@@ -2,12 +2,15 @@ import ActivityKit
 import SwiftUI
 
 /// 진짜 다이내믹 아일랜드. 사이트의 웹 실험에서 흉내 냈던 음악과 타이머를
-/// 라이브 액티비티로 띄운다. 켜고 홈으로 나가면 아일랜드에 뜬다.
-/// `-start music` 이나 `-start timer` 로 실행하면 들어오자마자 띄운다(녹화용).
+/// 실제 아일랜드에 띄운다. 음악은 직접 만든 아일랜드(라이브 액티비티)와
+/// 시스템 아일랜드(지금 재생 중)를 바꿔 가며 비교할 수 있다.
+///
+/// 녹화용으로 `-start music`, `-start system`, `-start timer` 로 실행하면 들어오자마자 띄운다.
 struct LiveActivityView: View {
     /// 지금 떠 있는 것. 앱이 앞에 있는 동안엔 iOS 가 아일랜드에 띄우지 않으므로
     /// 눌렀을 때 무엇이 떴는지 여기서 보여 준다.
     @State private var running: IslandAttributes.Kind?
+    @State private var musicMode = MusicPlayer.Mode.liveActivity
     @State private var error: String?
     @Environment(\.scenePhase) private var scenePhase
 
@@ -46,6 +49,11 @@ struct LiveActivityView: View {
             }
 
             Section {
+                Picker("음악 아일랜드", selection: $musicMode) {
+                    Text("직접 만든").tag(MusicPlayer.Mode.liveActivity)
+                    Text("시스템").tag(MusicPlayer.Mode.system)
+                }
+                .pickerStyle(.segmented)
                 Button("음악 띄우기", systemImage: "music.note") {
                     start(.music)
                 }
@@ -61,7 +69,7 @@ struct LiveActivityView: View {
                 }
                 .disabled(running == nil)
             } footer: {
-                Text("앱이 화면 앞에 있는 동안에는 iOS 가 아일랜드에 띄우지 않는다. 홈으로 나가면 뜨고, 길게 누르면 펼쳐지며, 펼친 아일랜드의 버튼도 동작한다.")
+                Text(footer)
             }
 
             if !ActivityAuthorizationInfo().areActivitiesEnabled {
@@ -74,10 +82,26 @@ struct LiveActivityView: View {
             }
         }
         .sensoryFeedback(.success, trigger: running) { _, new in new != nil }
+        // 듣는 중에 바꾸면 끊지 않고 아일랜드만 바꿔 띄운다.
+        .onChange(of: musicMode) { _, mode in
+            Task {
+                do {
+                    try await MusicPlayer.shared.switchMode(to: mode)
+                } catch {
+                    self.error = error.localizedDescription
+                }
+            }
+        }
         .task {
             refresh()
-            let kind = UserDefaults.standard.string(forKey: "start").flatMap(IslandAttributes.Kind.init)
-            if let kind { start(kind) }
+            switch UserDefaults.standard.string(forKey: "start") {
+            case "music": start(.music)
+            case "system":
+                musicMode = .system
+                start(.music)
+            case "timer": start(.timer)
+            default: break
+            }
         }
         // 아일랜드의 끄기 버튼으로 끄고 돌아왔을 수 있다.
         .onChange(of: scenePhase) { _, phase in
@@ -87,22 +111,33 @@ struct LiveActivityView: View {
 
     private var status: String {
         switch running {
-        case .music: "음악이 떠 있다"
+        case .music: musicMode == .system ? "음악이 시스템 아일랜드에 떠 있다" : "음악이 떠 있다"
         case .timer: "라면 타이머가 떠 있다"
         case nil: "떠 있는 게 없다"
         }
     }
 
+    private var footer: String {
+        let note = musicMode == .system
+            ? "시스템 아일랜드는 음악 앱들이 쓰는 \"지금 재생 중\"이다. 모양은 iOS 가 정하지만 재생 막대를 끌 수 있다."
+            : "직접 만든 아일랜드는 라이브 액티비티다. 모양은 마음대로 그리지만 버튼만 눌리고 끌기는 안 된다."
+        return note + " 앱이 화면 앞에 있는 동안에는 아일랜드에 뜨지 않으니 홈으로 나가서 보자."
+    }
+
     private func refresh() {
         running = IslandController.current?.attributes.kind
+            ?? (MusicPlayer.shared.isActive ? .music : nil)
     }
 
     private func start(_ kind: IslandAttributes.Kind) {
         Task {
             do {
-                MusicPlayer.shared.stop()
-                try await IslandController.start(kind)
-                if kind == .music { await MusicPlayer.shared.play(track: 0) }
+                if kind == .music {
+                    try await MusicPlayer.shared.start(musicMode)
+                } else {
+                    MusicPlayer.shared.stop()
+                    try await IslandController.start(.timer)
+                }
                 running = kind
                 error = nil
             } catch {

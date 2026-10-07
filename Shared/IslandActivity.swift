@@ -62,21 +62,27 @@ struct Track: Sendable {
     let artist: String
     let colors: [Color]
     let preview: URL
+    /// 시스템 아일랜드(지금 재생 중)에 넘기는 앨범 표지. 위젯은 네트워크 이미지를 못 그려서
+    /// 직접 만든 아일랜드는 곡 색 그라데이션으로 대신한다.
+    let artwork: URL
 
     /// 미리듣기의 실제 길이를 읽기 전에 쓰는 값.
     static let duration: TimeInterval = 30
     static let all = [
         Track(
             title: "LOVE ATTACK", artist: "RESCENE", colors: [.pink, .purple],
-            preview: URL(string: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/6a/c5/ec/6ac5ecf5-6e26-e551-0b1d-d9f2fcb253a2/mzaf_18228858557779313654.plus.aac.p.m4a")!
+            preview: URL(string: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/6a/c5/ec/6ac5ecf5-6e26-e551-0b1d-d9f2fcb253a2/mzaf_18228858557779313654.plus.aac.p.m4a")!,
+            artwork: URL(string: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/43/0b/4c/430b4c8e-3cb8-da27-648f-435ec3b391a6/8804775334160.jpg/600x600bb.jpg")!
         ),
         Track(
             title: "Deja Vu", artist: "RESCENE", colors: [.orange, .red],
-            preview: URL(string: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/08/47/ac/0847ac83-1c65-e840-bf12-f6530c2da6e8/mzaf_4114291550689561164.plus.aac.p.m4a")!
+            preview: URL(string: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/08/47/ac/0847ac83-1c65-e840-bf12-f6530c2da6e8/mzaf_4114291550689561164.plus.aac.p.m4a")!,
+            artwork: URL(string: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/e3/4e/e4/e34ee4d9-47a3-8b51-b6cc-4d991508f0b5/cover_KM0023041_1.jpg/600x600bb.jpg")!
         ),
         Track(
             title: "밤밤밤", artist: "RESCENE", colors: [.indigo, .blue],
-            preview: URL(string: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/1c/32/c9/1c32c9aa-d07b-f31a-984d-d053ee71a22c/mzaf_2014368852966868589.plus.aac.p.m4a")!
+            preview: URL(string: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/1c/32/c9/1c32c9aa-d07b-f31a-984d-d053ee71a22c/mzaf_2014368852966868589.plus.aac.p.m4a")!,
+            artwork: URL(string: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/c1/4b/95/c14b95a9-1bc8-a4a4-4c02-f9c3d428aaef/8800303114402.jpg/600x600bb.jpg")!
         ),
     ]
 
