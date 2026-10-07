@@ -80,7 +80,7 @@ enum Ramen {
 /// 액티비티를 켜고, 바꾸고, 끄는 곳. 한 번에 하나만 띄운다.
 enum IslandController {
     static var current: Activity<IslandAttributes>? {
-        Activity<IslandAttributes>.activities.first
+        Activity<IslandAttributes>.activities.first { $0.activityState == .active }
     }
 
     static func start(_ kind: IslandAttributes.Kind) async throws {
