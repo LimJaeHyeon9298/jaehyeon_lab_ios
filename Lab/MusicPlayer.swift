@@ -16,6 +16,7 @@ final class MusicPlayer {
 
     func play(track: Int) async {
         self.track = track
+        duration = Track.duration
         try? AVAudioSession.sharedInstance().setCategory(.playback)
         try? AVAudioSession.sharedInstance().setActive(true)
 
@@ -23,12 +24,20 @@ final class MusicPlayer {
         player.replaceCurrentItem(with: item)
         observeEnd(of: item)
         player.play()
-        // 길이를 읽는 동안 아일랜드가 멈춰 있지 않게 먼저 30초로 띄워 둔다.
+        // 아일랜드는 버튼의 perform() 이 끝나야 다시 그려진다. 그래서 곡 길이를 네트워크로
+        // 읽는 건 기다리지 않고, 일단 30초로 띄운 뒤 길이가 오면 한 번 더 맞춘다.
         await sync()
-        if let length = try? await item.asset.load(.duration).seconds, length.isFinite, length > 0 {
-            duration = length
-            await sync()
-        }
+        Task { await loadDuration(of: item) }
+    }
+
+    private func loadDuration(of item: AVPlayerItem) async {
+        guard let length = try? await item.asset.load(.duration).seconds,
+              length.isFinite, length > 0,
+              player.currentItem === item else { return }
+        // 미리듣기는 거의 30초라 차이가 작으면 업데이트를 아낀다.
+        guard abs(length - duration) > 0.5 else { return }
+        duration = length
+        await sync()
     }
 
     func toggle() async {
