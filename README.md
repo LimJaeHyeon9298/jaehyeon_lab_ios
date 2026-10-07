@@ -8,5 +8,5 @@
 - `-experiment <id>` 인자로 실행하면 그 실험 화면에서 바로 시작한다.
 
 ```sh
-xcrun simctl launch booted com.jaehyeon.lab -experiment app-video-test
+xcrun simctl launch booted com.jaehyeon.lab -experiment live-activity
 ```

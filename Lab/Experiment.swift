@@ -16,10 +16,10 @@ struct Experiment: Identifiable, Hashable {
 enum Experiments {
     static let all: [Experiment] = [
         Experiment(
-            id: "app-video-test",
-            title: "앱 실험 자리",
-            summary: "첫 앱 실험을 만들기 전까지 쓰는 임시 화면.",
-            content: { AnyView(PlaceholderView()) }
+            id: "live-activity",
+            title: "진짜 다이내믹 아일랜드",
+            summary: "웹에서 흉내 냈던 음악과 타이머를 라이브 액티비티로 띄우기.",
+            content: { AnyView(LiveActivityView()) }
         ),
     ]
 
