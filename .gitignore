@@ -3,3 +3,10 @@ xcuserdata/
 DerivedData/
 build/
 *.xcuserstate
+
+# 서명·푸시 키. 공개 저장소라 절대 올리지 않는다.
+*.p8
+*.p12
+*.cer
+*.mobileprovision
+*.env
