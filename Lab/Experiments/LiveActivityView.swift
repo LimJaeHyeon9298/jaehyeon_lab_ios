@@ -54,6 +54,7 @@ struct LiveActivityView: View {
                 }
                 Button("끄기", systemImage: "xmark", role: .destructive) {
                     Task {
+                        MusicPlayer.shared.stop()
                         await IslandController.endAll()
                         running = nil
                     }
@@ -99,7 +100,9 @@ struct LiveActivityView: View {
     private func start(_ kind: IslandAttributes.Kind) {
         Task {
             do {
+                MusicPlayer.shared.stop()
                 try await IslandController.start(kind)
+                if kind == .music { await MusicPlayer.shared.play(track: 0) }
                 running = kind
                 error = nil
             } catch {

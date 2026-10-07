@@ -55,17 +55,29 @@ extension IslandAttributes.ContentState {
     }
 }
 
-/// 사이트의 다이내믹 아일랜드 실험과 같은 곡들. 웹처럼 30초 미리듣기 길이로 흘린다.
+/// 사이트의 다이내믹 아일랜드 실험과 같은 곡들. Apple 이 주는 30초 미리듣기를 재생한다.
+/// 주소는 https://itunes.apple.com/lookup?id=<trackId>&country=KR 에서 받았다.
 struct Track: Sendable {
     let title: String
     let artist: String
     let colors: [Color]
+    let preview: URL
 
+    /// 미리듣기의 실제 길이를 읽기 전에 쓰는 값.
     static let duration: TimeInterval = 30
     static let all = [
-        Track(title: "LOVE ATTACK", artist: "RESCENE", colors: [.pink, .purple]),
-        Track(title: "Deja Vu", artist: "RESCENE", colors: [.orange, .red]),
-        Track(title: "밤밤밤", artist: "RESCENE", colors: [.indigo, .blue]),
+        Track(
+            title: "LOVE ATTACK", artist: "RESCENE", colors: [.pink, .purple],
+            preview: URL(string: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/6a/c5/ec/6ac5ecf5-6e26-e551-0b1d-d9f2fcb253a2/mzaf_18228858557779313654.plus.aac.p.m4a")!
+        ),
+        Track(
+            title: "Deja Vu", artist: "RESCENE", colors: [.orange, .red],
+            preview: URL(string: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/08/47/ac/0847ac83-1c65-e840-bf12-f6530c2da6e8/mzaf_4114291550689561164.plus.aac.p.m4a")!
+        ),
+        Track(
+            title: "밤밤밤", artist: "RESCENE", colors: [.indigo, .blue],
+            preview: URL(string: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/1c/32/c9/1c32c9aa-d07b-f31a-984d-d053ee71a22c/mzaf_2014368852966868589.plus.aac.p.m4a")!
+        ),
     ]
 
     static func at(_ index: Int) -> Track {
@@ -80,7 +92,8 @@ enum Ramen {
 /// 액티비티를 켜고, 바꾸고, 끄는 곳. 한 번에 하나만 띄운다.
 enum IslandController {
     static var current: Activity<IslandAttributes>? {
-        Activity<IslandAttributes>.activities.first { $0.activityState == .active }
+        // 끝 시각이 지나 낡은(stale) 것도 버튼으로 다시 살릴 수 있어야 한다.
+        Activity<IslandAttributes>.activities.first { [.active, .stale].contains($0.activityState) }
     }
 
     static func start(_ kind: IslandAttributes.Kind) async throws {
@@ -93,6 +106,10 @@ enum IslandController {
             attributes: IslandAttributes(kind: kind),
             content: ActivityContent(state: state, staleDate: state.end)
         )
+    }
+
+    static func set(_ state: IslandAttributes.ContentState) async {
+        await update { _ in state }
     }
 
     static func update(_ change: (IslandAttributes.ContentState) -> IslandAttributes.ContentState) async {
